@@ -17,9 +17,11 @@ public record MessageDto(int Id, string Content, string SenderType, string? Send
 public record TicketSummaryDto(
     int Id, string Subject, string Status, string Priority,
     string CustomerName, string? AssignedAgentName,
-    DateTime CreatedAt, DateTime? UpdatedAt);
+    DateTime CreatedAt, DateTime? UpdatedAt,
+    bool BotActive, bool EscalatedFromBot);
 
 public record TicketDetailDto(
     int Id, string Subject, string? Description, string Status, string Priority,
     int CustomerId, string CustomerName, int? AssignedAgentId, string? AssignedAgentName,
-    DateTime CreatedAt, DateTime? UpdatedAt, List<MessageDto> Messages);
+    DateTime CreatedAt, DateTime? UpdatedAt, List<MessageDto> Messages,
+    bool BotActive, bool EscalatedFromBot);

@@ -16,7 +16,8 @@ public class TicketService : ITicketService
             Subject = request.Subject.Trim(),
             Description = request.Description?.Trim(),
             Priority = request.Priority,
-            CustomerId = userId
+            CustomerId = userId,
+            BotActive = true
         };
 
         // The description becomes the first message in the conversation
@@ -46,11 +47,11 @@ public class TicketService : ITicketService
         return await query
             .OrderByDescending(t => t.CreatedAt)
             .Select(t => new TicketSummaryDto(
-                t.Id, t.Subject, t.Status.ToString(), t.Priority.ToString(),
-                t.Customer.FullName,
-                t.AssignedAgent != null ? t.AssignedAgent.FullName : null,
-                t.CreatedAt, t.UpdatedAt))
-            .ToListAsync();
+                    t.Id, t.Subject, t.Status.ToString(), t.Priority.ToString(),
+                    t.Customer.FullName,
+                    t.AssignedAgent != null ? t.AssignedAgent.FullName : null,
+                    t.CreatedAt, t.UpdatedAt, t.BotActive, t.EscalatedFromBot))
+                    .ToListAsync();
     }
 
     public async Task<TicketDetailDto?> GetByIdAsync(int ticketId, int userId, UserRole role)
@@ -117,18 +118,19 @@ public class TicketService : ITicketService
     }
 
     private Task<TicketDetailDto?> GetDetailAsync(int ticketId) =>
-        _db.Tickets.AsNoTracking()
-            .Where(t => t.Id == ticketId)
-            .Select(t => new TicketDetailDto(
-                t.Id, t.Subject, t.Description, t.Status.ToString(), t.Priority.ToString(),
-                t.CustomerId, t.Customer.FullName,
-                t.AssignedAgentId, t.AssignedAgent != null ? t.AssignedAgent.FullName : null,
-                t.CreatedAt, t.UpdatedAt,
-                t.Messages.OrderBy(m => m.SentAt)
-                    .Select(m => new MessageDto(m.Id, m.Content, m.SenderType.ToString(),
-                        m.Sender != null ? m.Sender.FullName : "Support Bot", m.SentAt))
-                    .ToList()))
-            .FirstOrDefaultAsync();
+    _db.Tickets.AsNoTracking()
+        .Where(t => t.Id == ticketId)
+        .Select(t => new TicketDetailDto(
+            t.Id, t.Subject, t.Description, t.Status.ToString(), t.Priority.ToString(),
+            t.CustomerId, t.Customer.FullName,
+            t.AssignedAgentId, t.AssignedAgent != null ? t.AssignedAgent.FullName : null,
+            t.CreatedAt, t.UpdatedAt,
+            t.Messages.OrderBy(m => m.SentAt)
+                .Select(m => new MessageDto(m.Id, m.Content, m.SenderType.ToString(),
+                    m.Sender != null ? m.Sender.FullName : "Support Bot", m.SentAt))
+                .ToList(),
+            t.BotActive, t.EscalatedFromBot))
+        .FirstOrDefaultAsync();
 
     public Task<int?> GetCustomerIdAsync(int ticketId) =>
     _db.Tickets.AsNoTracking()
