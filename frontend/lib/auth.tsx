@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useSyncExternalStore, ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "./api";
 import { AuthUser } from "./types";
@@ -19,22 +19,47 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+const AUTH_EVENT = "auth-change";
+
+function subscribe(callback: () => void) {
+  window.addEventListener("storage", callback);   // other tabs
+  window.addEventListener(AUTH_EVENT, callback);  // this tab
+  return () => {
+    window.removeEventListener("storage", callback);
+    window.removeEventListener(AUTH_EVENT, callback);
+  };
+}
+
+// Returns a string (or null) so React can compare snapshots cheaply
+function getSnapshot(): string | null {
+  return localStorage.getItem("token") ? localStorage.getItem("user") : null;
+}
+
+const getServerSnapshot = () => null;
+
+// "false while hydrating, true afterwards"
+const subscribeNoop = () => () => {};
+
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  useEffect(() => {
-    const saved = localStorage.getItem("user");
-    if (saved && localStorage.getItem("token")) setUser(JSON.parse(saved));
-    setLoading(false);
-  }, []);
+  const raw = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const hydrated = useSyncExternalStore(subscribeNoop, () => true, () => false);
+
+  const user = useMemo<AuthUser | null>(() => {
+    if (!raw) return null;
+    try {
+      return JSON.parse(raw) as AuthUser;
+    } catch {
+      return null;
+    }
+  }, [raw]);
 
   function saveSession(res: AuthResponse) {
     const { token, ...u } = res;
     localStorage.setItem("token", token);
     localStorage.setItem("user", JSON.stringify(u));
-    setUser(u);
+    window.dispatchEvent(new Event(AUTH_EVENT));
   }
 
   async function login(email: string, password: string) {
@@ -58,12 +83,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   function logout() {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-    setUser(null);
+    window.dispatchEvent(new Event(AUTH_EVENT));
     router.push("/login");
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading: !hydrated, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );
