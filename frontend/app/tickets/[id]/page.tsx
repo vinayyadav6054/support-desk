@@ -1,11 +1,12 @@
 "use client";
 
-import { Suspense, useEffect, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Bot, Send, UserCheck } from "lucide-react";
 import { api } from "@/lib/api";
 import { useRequireAuth } from "@/lib/auth";
+import { useChatHub } from "@/lib/useChatHub";
 import { formatDate } from "@/lib/format";
 import { Message, STATUSES, TicketDetail } from "@/lib/types";
 import StatusBadge from "@/components/StatusBadge";
@@ -13,25 +14,86 @@ import { Avatar, Button, inputClass } from "@/components/ui";
 
 function TicketDetailContent() {
   const { id } = useParams<{ id: string }>();
+  const ticketId = Number(id);
   const { user, loading } = useRequireAuth();
   const [ticket, setTicket] = useState<TicketDetail | null>(null);
   const [error, setError] = useState("");
   const [reply, setReply] = useState("");
   const [sending, setSending] = useState(false);
+  const [typingName, setTypingName] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const typingClear = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const typingStop = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const lastTypingSent = useRef(0);
 
   const isStaff = user?.role === "Agent" || user?.role === "Admin";
 
-  useEffect(() => {
-    if (!user) return;
-    api<TicketDetail>(`/api/tickets/${id}`)
+  const loadTicket = useCallback(() => {
+    return api<TicketDetail>(`/api/tickets/${id}`)
       .then(setTicket)
       .catch((e) => setError(e.status === 404 ? "Ticket not found." : e.message));
-  }, [user, id]);
+  }, [id]);
+
+  useEffect(() => {
+    if (user) loadTicket();
+  }, [user, loadTicket]);
+
+  // Adds a message once, even if it arrives from both the POST response and SignalR
+  function addMessage(msg: Message) {
+    setTicket((t) =>
+      t && !t.messages.some((m) => m.id === msg.id)
+        ? { ...t, messages: [...t.messages, msg] }
+        : t
+    );
+  }
+
+  const { connection, connected } = useChatHub(
+    !!user,
+    {
+      ReceiveMessage: (incomingTicketId: number, msg: Message) => {
+        if (incomingTicketId !== ticketId) return;
+        addMessage(msg);
+        setTypingName(null);
+      },
+      TicketUpdated: (updated: TicketDetail) => {
+        if (updated.id === ticketId) setTicket(updated);
+      },
+      Typing: (p: { ticketId: number; name: string; isTyping: boolean }) => {
+        if (p.ticketId !== ticketId) return;
+        clearTimeout(typingClear.current);
+        if (p.isTyping) {
+          setTypingName(p.name);
+          typingClear.current = setTimeout(() => setTypingName(null), 4000);
+        } else {
+          setTypingName(null);
+        }
+      },
+    },
+    async (conn) => {
+      await conn.invoke("JoinTicket", ticketId);
+      loadTicket(); // catch anything missed while disconnected
+    }
+  );
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [ticket?.messages.length]);
+  }, [ticket?.messages.length, typingName]);
+
+  function handleReplyChange(value: string) {
+    setReply(value);
+    if (!connection) return;
+
+    const now = Date.now();
+    if (now - lastTypingSent.current > 2000) {
+      lastTypingSent.current = now;
+      connection.invoke("Typing", ticketId, true).catch(() => {});
+    }
+    clearTimeout(typingStop.current);
+    typingStop.current = setTimeout(() => {
+      lastTypingSent.current = 0;
+      connection.invoke("Typing", ticketId, false).catch(() => {});
+    }, 2500);
+  }
 
   async function sendReply(e: React.FormEvent) {
     e.preventDefault();
@@ -42,9 +104,12 @@ function TicketDetailContent() {
         method: "POST",
         body: JSON.stringify({ content: reply }),
       });
-      setTicket({ ...ticket, messages: [...ticket.messages, msg] });
+      addMessage(msg);
       setReply("");
       setError("");
+      clearTimeout(typingStop.current);
+      lastTypingSent.current = 0;
+      connection?.invoke("Typing", ticketId, false).catch(() => {});
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not send message");
     } finally {
@@ -88,9 +153,15 @@ function TicketDetailContent() {
 
   return (
     <div>
-      <Link href="/tickets" className="mb-4 inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-900">
-        <ArrowLeft className="h-4 w-4" /> Back to tickets
-      </Link>
+      <div className="mb-4 flex items-center justify-between">
+        <Link href="/tickets" className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-900">
+          <ArrowLeft className="h-4 w-4" /> Back to tickets
+        </Link>
+        <span className="inline-flex items-center gap-1.5 text-xs text-slate-500">
+          <span className={`h-2 w-2 rounded-full ${connected ? "bg-emerald-500" : "bg-amber-400 animate-pulse"}`} />
+          {connected ? "Live" : "Connecting..."}
+        </span>
+      </div>
 
       <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <div className="flex flex-wrap items-start justify-between gap-3">
@@ -173,6 +244,10 @@ function TicketDetailContent() {
             </div>
           );
         })}
+
+        {typingName && (
+          <p className="animate-pulse text-sm text-slate-500">{typingName} is typing...</p>
+        )}
         <div ref={bottomRef} />
       </div>
 
@@ -182,7 +257,7 @@ function TicketDetailContent() {
         <form onSubmit={sendReply} className="sticky bottom-4 mt-6 flex gap-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-md">
           <input
             value={reply}
-            onChange={(e) => setReply(e.target.value)}
+            onChange={(e) => handleReplyChange(e.target.value)}
             placeholder="Type your reply..."
             className={`${inputClass} border-0 focus:ring-0`}
           />

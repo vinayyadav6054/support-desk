@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Inbox, Plus, UserCheck } from "lucide-react";
 import { api } from "@/lib/api";
@@ -8,6 +8,7 @@ import { useRequireAuth } from "@/lib/auth";
 import { timeAgo } from "@/lib/format";
 import { TicketSummary } from "@/lib/types";
 import StatusBadge from "@/components/StatusBadge";
+import { useChatHub } from "@/lib/useChatHub";
 
 const FILTERS = ["All", "Open", "InProgress", "Resolved", "Closed"] as const;
 
@@ -25,13 +26,20 @@ export default function TicketsPage() {
   const [error, setError] = useState("");
   const [fetching, setFetching] = useState(true);
 
-  useEffect(() => {
-    if (!user) return;
-    api<TicketSummary[]>("/api/tickets")
-      .then(setTickets)
-      .catch((e) => setError(e.message))
-      .finally(() => setFetching(false));
-  }, [user]);
+  const loadTickets = useCallback(() => {
+  return api<TicketSummary[]>("/api/tickets")
+    .then(setTickets)
+    .catch((e) => setError(e.message))
+    .finally(() => setFetching(false));
+}, []);
+
+useEffect(() => {
+  if (user) loadTickets();
+}, [user, loadTickets]);
+
+useChatHub(!!user, {
+  TicketChanged: () => loadTickets(),
+});
 
   if (loading || !user) return null;
 
