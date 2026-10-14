@@ -43,7 +43,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       body: JSON.stringify({ email, password }),
     });
     saveSession(res);
-    router.push("/tickets");
+    router.push(res.role === "Customer" ? "/tickets" : "/dashboard");
   }
 
   async function register(fullName: string, email: string, password: string) {

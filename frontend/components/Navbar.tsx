@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpen, LifeBuoy, LogOut, Ticket, Users } from "lucide-react";
+import { BookOpen, LayoutDashboard, LifeBuoy, LogOut, Ticket, Users } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { Role } from "@/lib/types";
 import { Avatar } from "./ui";
@@ -13,6 +13,7 @@ const links: {
   icon: React.ComponentType<{ className?: string }>;
   roles: Role[];
 }[] = [
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["Agent", "Admin"] },
   { href: "/tickets", label: "Tickets", icon: Ticket, roles: ["Customer", "Agent", "Admin"] },
   { href: "/admin/users", label: "Users", icon: Users, roles: ["Admin"] },
   { href: "/admin/kb", label: "Knowledge base", icon: BookOpen, roles: ["Admin"] },

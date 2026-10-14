@@ -60,3 +60,29 @@ export interface ManagedUser {
   role: Role;
   createdAt: string;
 }
+
+export interface DayCount {
+  date: string;
+  count: number;
+}
+
+export interface PriorityCount {
+  priority: string;
+  count: number;
+}
+
+export interface Dashboard {
+  total: number;
+  open: number;
+  inProgress: number;
+  resolved: number;
+  closed: number;
+  needsAgent: number;
+  escalatedOpen: number;
+  botHandling: number;
+  resolvedByBot: number;
+  myOpen: number;
+  byPriority: PriorityCount[];
+  last7Days: DayCount[];
+  avgFirstResponseMinutes: number | null;
+}
