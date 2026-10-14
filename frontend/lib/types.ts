@@ -52,3 +52,11 @@ export interface TestBotResult {
   articleTitle: string | null;
   score: number;
 }
+
+export interface ManagedUser {
+  id: number;
+  fullName: string;
+  email: string;
+  role: Role;
+  createdAt: string;
+}
