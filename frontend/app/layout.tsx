@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/lib/auth";
@@ -16,7 +17,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body className={`${inter.className} min-h-screen bg-slate-50 text-slate-900 antialiased`}>
         <AuthProvider>
-          <Navbar />
+          <Suspense fallback={<div className="h-[57px] border-b border-slate-200 bg-white" />}>
+            <Navbar />
+          </Suspense>
           <main className="mx-auto max-w-4xl px-6 py-8">{children}</main>
         </AuthProvider>
       </body>
