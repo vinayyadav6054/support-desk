@@ -38,23 +38,26 @@ export function useChatHub(
     });
     conn.onclose(() => setConnected(false));
 
-    conn
-      .start()
-      .then(() => {
-        if (cancelled) {
-          conn.stop();
-          return;
-        }
-        setConnection(conn);
-        setConnected(true);
-        onReadyRef.current?.(conn);
-      })
-      .catch((err) => {
-        if (!cancelled) console.error("SignalR connection failed:", err);
-      });
+        const startTimer = setTimeout(() => {
+      conn
+        .start()
+        .then(() => {
+          if (cancelled) {
+            conn.stop();
+            return;
+          }
+          setConnection(conn);
+          setConnected(true);
+          onReadyRef.current?.(conn);
+        })
+        .catch((err) => {
+          if (!cancelled) console.error("SignalR connection failed:", err);
+        });
+    }, 0);
 
     return () => {
       cancelled = true;
+      clearTimeout(startTimer);
       setConnection(null);
       setConnected(false);
       conn.stop();
