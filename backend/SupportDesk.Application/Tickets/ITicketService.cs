@@ -15,5 +15,6 @@ namespace SupportDesk.Application.Tickets
         Task<TicketDetailDto?> UpdateAsync(int ticketId, UpdateTicketRequest request);
         Task<TicketDetailDto?> AssignToMeAsync(int ticketId, int agentId);
         Task<MessageDto?> AddMessageAsync(int ticketId, int userId, UserRole role, AddMessageRequest request);
+        Task<int?> GetCustomerIdAsync(int ticketId);
     }
 }

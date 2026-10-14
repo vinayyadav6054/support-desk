@@ -129,4 +129,10 @@ public class TicketService : ITicketService
                         m.Sender != null ? m.Sender.FullName : "Support Bot", m.SentAt))
                     .ToList()))
             .FirstOrDefaultAsync();
+
+    public Task<int?> GetCustomerIdAsync(int ticketId) =>
+    _db.Tickets.AsNoTracking()
+        .Where(t => t.Id == ticketId)
+        .Select(t => (int?)t.CustomerId)
+        .FirstOrDefaultAsync();
 }
