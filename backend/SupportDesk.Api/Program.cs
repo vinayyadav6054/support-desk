@@ -12,6 +12,8 @@ using SupportDesk.Application.Chatbot;
 using SupportDesk.Infrastructure.Chatbot;
 using SupportDesk.Application.Users;
 using SupportDesk.Infrastructure.Users;
+using SupportDesk.Application.Dashboard;
+using SupportDesk.Infrastructure.Dashboard;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -33,6 +35,7 @@ builder.Services.AddScoped<IChatbotService, FaqChatbotService>();
 builder.Services.AddScoped<IKnowledgeService, KnowledgeService>();
 builder.Services.AddScoped<ITicketBotService, TicketBotService>();
 builder.Services.AddScoped<IUserAdminService, UserAdminService>();
+builder.Services.AddScoped<IDashboardService, DashboardService>();
 
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
