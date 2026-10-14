@@ -23,6 +23,7 @@ namespace SupportDesk.Domain
         public User? AssignedAgent { get; set; }
 
         public bool EscalatedFromBot { get; set; }
+        public bool BotActive { get; set; }
 
         public List<Message> Messages { get; set; } = new();
     }

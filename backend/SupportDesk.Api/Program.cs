@@ -8,6 +8,8 @@ using SupportDesk.Application.Tickets;
 using SupportDesk.Infrastructure;
 using SupportDesk.Infrastructure.Auth;
 using SupportDesk.Infrastructure.Tickets;
+using SupportDesk.Application.Chatbot;
+using SupportDesk.Infrastructure.Chatbot;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,6 +27,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ITicketService, TicketService>();
+builder.Services.AddScoped<IChatbotService, FaqChatbotService>();
+builder.Services.AddScoped<IKnowledgeService, KnowledgeService>();
 
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

@@ -17,10 +17,100 @@ namespace SupportDesk.Infrastructure.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.20")
+                .HasAnnotation("ProductVersion", "9.0.21")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+
+            modelBuilder.Entity("SupportDesk.Domain.KnowledgeArticle", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Answer")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Keywords")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("KnowledgeArticles");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Answer = "If you can't log in, try these steps:\n1. Check that your email address is typed correctly.\n2. Use the 'Forgot password' option to reset your password.\n3. If you've had several failed attempts, wait 15 minutes and try again, as your account may be temporarily locked.",
+                            CreatedAt = new DateTime(2026, 10, 14, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            Keywords = "login, log in, sign in, cannot login, cant login, unable to login, locked out, account locked, invalid credentials, access",
+                            Title = "Login problems"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Answer = "To reset your password, open the login page, choose 'Forgot password', and enter your email. You'll get a reset link within a few minutes. If it doesn't arrive, check your spam folder and make sure you used the email address you registered with.",
+                            CreatedAt = new DateTime(2026, 10, 14, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            Keywords = "reset password, forgot password, change password, password reset, new password, reset email, email not received, forgot",
+                            Title = "Reset your password"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Answer = "Your invoices and receipts are available under Account > Billing. For a refund or a duplicate charge, our team will need to review it, so please tell us the date and amount.",
+                            CreatedAt = new DateTime(2026, 10, 14, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            Keywords = "billing, invoice, payment, charged, refund, receipt, subscription, card, charge, double charged",
+                            Title = "Billing and invoices"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Answer = "You can deactivate your account under Account > Settings > Delete account. This can't be undone. If you'd like a person to handle the request, choose 'Talk to a human'.",
+                            CreatedAt = new DateTime(2026, 10, 14, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            Keywords = "delete account, close account, cancel account, remove account, deactivate account",
+                            Title = "Delete or deactivate your account"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Answer = "You can update your name and email under Account > Profile. Changing your email may require you to confirm the new address.",
+                            CreatedAt = new DateTime(2026, 10, 14, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            Keywords = "change email, update email, change name, update profile, profile, account details, edit profile",
+                            Title = "Update your profile or email"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            Answer = "Sorry you're running into trouble. Please try refreshing the page, clearing your browser cache, or using another browser. If it continues, tell us what you were doing and any error message you saw, and an agent will take a look.",
+                            CreatedAt = new DateTime(2026, 10, 14, 0, 0, 0, 0, DateTimeKind.Utc),
+                            IsActive = true,
+                            Keywords = "slow, outage, down, not loading, error, crash, crashing, not working, bug, broken, loading",
+                            Title = "Slow or not working"
+                        });
+                });
 
             modelBuilder.Entity("SupportDesk.Domain.Message", b =>
                 {
@@ -67,6 +157,9 @@ namespace SupportDesk.Infrastructure.Migrations
 
                     b.Property<int?>("AssignedAgentId")
                         .HasColumnType("int");
+
+                    b.Property<bool>("BotActive")
+                        .HasColumnType("bit");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
