@@ -16,6 +16,8 @@ export interface TicketSummary {
   assignedAgentName: string | null;
   createdAt: string;
   updatedAt: string | null;
+  botActive: boolean;
+  escalatedFromBot: boolean;
 }
 
 export interface Message {
@@ -35,3 +37,18 @@ export interface TicketDetail extends TicketSummary {
 
 export const STATUSES = ["Open", "InProgress", "Resolved", "Closed"] as const;
 export const PRIORITIES = ["Low", "Medium", "High", "Urgent"] as const;
+
+export interface Article {
+  id: number;
+  title: string;
+  keywords: string;
+  answer: string;
+  isActive: boolean;
+}
+
+export interface TestBotResult {
+  matched: boolean;
+  reply: string;
+  articleTitle: string | null;
+  score: number;
+}

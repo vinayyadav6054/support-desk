@@ -117,9 +117,13 @@ useChatHub(!!user, {
                     <span className="text-slate-400">#{t.id}</span> {t.subject}
                   </p>
                   <div className="flex shrink-0 gap-2">
-                    <StatusBadge value={t.priority} />
-                    <StatusBadge value={t.status} />
-                  </div>
+                        {t.botActive && <StatusBadge value="Bot" />}
+                        {t.escalatedFromBot && !t.botActive && t.status !== "Resolved" && t.status !== "Closed" && (
+                            <StatusBadge value="Escalated" />
+                        )}
+                        <StatusBadge value={t.priority} />
+                        <StatusBadge value={t.status} />
+                    </div>
                 </div>
                 <p className="mt-1.5 flex flex-wrap items-center gap-x-3 text-sm text-slate-500">
                   <span>{t.customerName}</span>

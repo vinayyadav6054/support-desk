@@ -8,61 +8,69 @@ import { buildConnection } from "./signalr";
 type Handlers = Record<string, (...args: any[]) => void>;
 
 export function useChatHub(
-  enabled: boolean,
-  handlers: Handlers,
-  onReady?: (conn: HubConnection) => void
+    enabled: boolean,
+    handlers: Handlers,
+    onReady?: (conn: HubConnection) => void
 ) {
-  // Refs keep the latest handlers without reconnecting on every render
-  const handlersRef = useRef(handlers);
-  const onReadyRef = useRef(onReady);
-  handlersRef.current = handlers;
-  onReadyRef.current = onReady;
+    // Refs keep the latest handlers without reconnecting on every render
+    const handlersRef = useRef(handlers);
+    const onReadyRef = useRef(onReady);
+    handlersRef.current = handlers;
+    onReadyRef.current = onReady;
 
-  const [connection, setConnection] = useState<HubConnection | null>(null);
-  const [connected, setConnected] = useState(false);
+    const [connection, setConnection] = useState<HubConnection | null>(null);
+    const [connected, setConnected] = useState(false);
 
-  useEffect(() => {
-    if (!enabled) return;
+    useEffect(() => {
+        if (!enabled) return;
 
-    const conn = buildConnection();
-    let cancelled = false;
+        const conn = buildConnection();
+        let cancelled = false;
 
-    for (const name of Object.keys(handlersRef.current)) {
-      conn.on(name, (...args) => handlersRef.current[name]?.(...args));
-    }
+        for (const name of Object.keys(handlersRef.current)) {
+            conn.on(name, (...args) => handlersRef.current[name]?.(...args));
+        }
 
-    conn.onreconnecting(() => setConnected(false));
-    conn.onreconnected(() => {
-      setConnected(true);
-      onReadyRef.current?.(conn); // groups are lost on reconnect, so rejoin
-    });
-    conn.onclose(() => setConnected(false));
+        conn.onreconnecting(() => setConnected(false));
+        conn.onreconnected(() => {
+            setConnected(true);
+            onReadyRef.current?.(conn); // groups are lost on reconnect, so rejoin
+        });
+        conn.onclose(() => setConnected(false));
 
         const startTimer = setTimeout(() => {
-      conn
-        .start()
-        .then(() => {
-          if (cancelled) {
+            conn
+                .start()
+                .then(() => {
+                    if (cancelled) {
+                        conn.stop();
+                        return;
+                    }
+                    setConnection(conn);
+                    setConnected(true);
+                    onReadyRef.current?.(conn);
+                })
+                .catch((err) => {
+                    if (cancelled) return;
+                    console.error("SignalR connection failed:", err);
+
+                    // Expired or invalid token: send the user back to login
+                    if (String(err).includes("401")) {
+                        localStorage.removeItem("token");
+                        localStorage.removeItem("user");
+                        window.location.href = "/login";
+                    }
+                });
+        }, 0);
+
+        return () => {
+            cancelled = true;
+            clearTimeout(startTimer);
+            setConnection(null);
+            setConnected(false);
             conn.stop();
-            return;
-          }
-          setConnection(conn);
-          setConnected(true);
-          onReadyRef.current?.(conn);
-        })
-        .catch((err) => {
-          if (!cancelled) console.error("SignalR connection failed:", err);
-        });
-    }, 0);
+        };
+    }, [enabled]);
 
-    return () => {
-      cancelled = true;
-      clearTimeout(startTimer);
-      setConnection(null);
-      setConnected(false);
-      conn.stop();
-    };
-  }, [enabled]);
-
-  return { connection, connected };
+    return { connection, connected };
 }

@@ -49,8 +49,8 @@ public class FaqChatbotService : IChatbotService
             // At least one real keyword must match, otherwise title words alone could mislead
             if (keywordHits == 0) continue;
 
-            // Long messages shouldn't be punished: divide by at most 3 words
-            var score = Math.Min(1.0, points / Math.Min(query.Count, 3));
+            // Long messages shouldn't be punished: divide by at most 2 words
+            var score = Math.Min(1.0, points / Math.Min(query.Count, 2));
 
             if (score > bestScore)
             {

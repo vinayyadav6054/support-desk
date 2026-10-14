@@ -19,20 +19,24 @@ export default function NewTicketPage() {
   const [busy, setBusy] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError("");
-    setBusy(true);
-    try {
-      const ticket = await api<TicketDetail>("/api/tickets", {
-        method: "POST",
-        body: JSON.stringify({ subject, description, priority }),
-      });
-      router.push(`/tickets/${ticket.id}`);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not create ticket");
-      setBusy(false);
-    }
+  e.preventDefault();
+  setError("");
+  setBusy(true);
+  try {
+    const ticket = await api<TicketDetail>("/api/tickets", {
+      method: "POST",
+      body: JSON.stringify({ subject, description, priority }),
+    });
+    setSubject("");
+    setDescription("");
+    setPriority("Medium");
+    router.push(`/tickets/${ticket.id}`);
+  } catch (err) {
+    setError(err instanceof Error ? err.message : "Could not create ticket");
+  } finally {
+    setBusy(false);
   }
+}
 
   if (loading || !user) return null;
 

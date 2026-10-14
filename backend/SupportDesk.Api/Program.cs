@@ -29,6 +29,7 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<ITicketService, TicketService>();
 builder.Services.AddScoped<IChatbotService, FaqChatbotService>();
 builder.Services.AddScoped<IKnowledgeService, KnowledgeService>();
+builder.Services.AddScoped<ITicketBotService, TicketBotService>();
 
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

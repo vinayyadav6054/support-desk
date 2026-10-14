@@ -7,6 +7,8 @@ const styles: Record<string, string> = {
   Medium: "bg-sky-50 text-sky-700 ring-sky-200",
   High: "bg-orange-50 text-orange-700 ring-orange-200",
   Urgent: "bg-red-50 text-red-700 ring-red-200",
+  Bot: "bg-violet-50 text-violet-700 ring-violet-200",
+  Escalated: "bg-rose-50 text-rose-700 ring-rose-200",
 };
 
 const labels: Record<string, string> = { InProgress: "In progress" };
