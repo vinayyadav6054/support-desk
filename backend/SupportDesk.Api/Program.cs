@@ -14,16 +14,20 @@ using SupportDesk.Application.Users;
 using SupportDesk.Infrastructure.Users;
 using SupportDesk.Application.Dashboard;
 using SupportDesk.Infrastructure.Dashboard;
+using SupportDesk.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
+
+var allowedOrigins = (builder.Configuration["Cors:AllowedOrigins"] ?? "http://localhost:3000")
+    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("Frontend", policy =>
-        policy.WithOrigins("http://localhost:3000")
+        policy.WithOrigins(allowedOrigins)
               .AllowAnyHeader()
               .AllowAnyMethod()
-              .AllowCredentials());   // required by SignalR's negotiate request
+              .AllowCredentials());
 });
 
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -80,6 +84,13 @@ builder.Services.AddSignalR();
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await DatabaseInitializer.InitializeAsync(db, app.Configuration, app.Logger);
+}
+
 
 if (app.Environment.IsDevelopment())
 {

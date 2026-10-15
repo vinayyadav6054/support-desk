@@ -6,6 +6,7 @@ import { BookOpen, LayoutDashboard, LifeBuoy, LogOut, Ticket, Users } from "luci
 import { useAuth } from "@/lib/auth";
 import { Role } from "@/lib/types";
 import { Avatar } from "./ui";
+import { useHydrated } from "@/lib/useHydrated";
 
 const links: {
   href: string;
@@ -20,7 +21,9 @@ const links: {
 ];
 
 export default function Navbar() {
-  const { user, logout } = useAuth();
+  const { user: authUser, logout } = useAuth();
+  const hydrated = useHydrated();
+  const user = hydrated ? authUser : null;
   const pathname = usePathname();
 
   return (
